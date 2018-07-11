@@ -1,5 +1,14 @@
+// Import constants
 const fs = require('fs');
 const countries = require('./country-list');
+
+// Literal Constants
+const countryName = 'Country Name';
+const countryPopulation = 'Population (Millions) - 2012';
+const countryGDP = 'GDP Billions (US Dollar) - 2012';
+
+const outputFile = './output/output.json';
+
 
 /**
  *
@@ -9,10 +18,12 @@ const countries = require('./country-list');
 function processCsv(csvText) {
   // Remove all the double quotes from the csv text.
   const csvTextProcessed = csvText.replace(/['"]+/g, '');
+
   // Split the csv text on newline to get the rows
   const csvRows = csvTextProcessed.split('\n');
   const countryDataList = [];
   const headers = csvRows[0].split(',');
+
   // Iterate over all the rows except the headers and create country data objects
   for (let i = 1; i < csvRows.length; i += 1) {
     if (csvRows[i].length > 0) {
@@ -43,26 +54,29 @@ function readFile(filePath) {
 const aggregate = (filePath) => {
   // Call the readFile method to get the
   const csvText = readFile(filePath);
+
   // Process the csv text to get the list of country data objects.
   const countryDataList = processCsv(csvText);
   const continentData = {};
-  // Get the list of all distinct continents.
-  const continents = new Set(countries.values());
+
   // Create continent data objects and push them into a list.
-  continents.forEach((continent) => {
+  new Set(countries.values()).forEach((continent) => {
     continentData[continent] = {
       GDP_2012: 0, POPULATION_2012: 0,
     };
   });
+
   // Iterate over all the country data and update the continent statistics.
   countryDataList.forEach((country) => {
-    if (country['Country Name'] !== ' ' && countries.has(country['Country Name'])) {
-      continentData[countries.get(country['Country Name'])].GDP_2012 += parseFloat(country['GDP Billions (US Dollar) - 2012']);
-      continentData[countries.get(country['Country Name'])].POPULATION_2012 += parseFloat(country['Population (Millions) - 2012']);
+    if (country[countryName] !== ' ' && countries.has(country[countryName])) {
+      const continentName = countries.get(country[countryName]);
+      continentData[continentName].GDP_2012 += parseFloat(country[countryGDP]);
+      continentData[continentName].POPULATION_2012 += parseFloat(country[countryPopulation]);
     }
   });
+
   // Write the continent data into the output file.
-  fs.writeFileSync('./output/output.json', JSON.stringify(continentData));
+  fs.writeFileSync(outputFile, JSON.stringify(continentData));
 };
 
 module.exports = aggregate;
