@@ -47,6 +47,4 @@ const aggregate = (filePath) => {
   fs.writeFileSync('./output/output.json', JSON.stringify(continentData));
 };
 
-aggregate('D:\\Workspace\\aggregate-gdp-population-js-problem-sankalpjohri\\data\\datafile.csv');
-
 module.exports = aggregate;
