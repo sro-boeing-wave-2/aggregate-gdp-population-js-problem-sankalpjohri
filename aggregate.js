@@ -5,6 +5,8 @@ const fs = require('fs');
 const countryName = 'Country Name';
 const countryPopulation = 'Population (Millions) - 2012';
 const countryGDP = 'GDP Billions (US Dollar) - 2012';
+const countryString = 'country';
+const continentString = 'continent';
 
 const outputFile = './output/output.json';
 const countryContinentFile = './country-list.json';
@@ -41,8 +43,8 @@ function processCsv(csvText) {
 function getCountryContinentMap(countryContinentJson) {
   const countryArray = JSON.parse(countryContinentJson);
   const countryContinentMap = new Map();
-  countryArray.forEach(country => {
-    countryContinentMap.set(country['country'], country['continent']);
+  countryArray.forEach((country) => {
+    countryContinentMap.set(country[countryString], country[continentString]);
   });
   return countryContinentMap;
 }
@@ -80,43 +82,38 @@ function writeFile(filePath, data) {
  * Aggregates GDP and Population Data by Continents
  * @param {String} filePath
  */
-const aggregate = (filePath) => {
-
-  return new Promise((resolve, reject) => {
-    // Call the readFile method to get the
-    Promise.all([readFile(filePath), readFile(countryContinentFile)]).then((result) => {
-      const countryDataList = processCsv(result[0]);
-      const countries = getCountryContinentMap(result[1]);
-      // Process the csv text to get the list of country data objects.
-      const continentData = {};
-      // Create continent data objects and push them into a list.
-      new Set(countries.values()).forEach((continent) => {
-        continentData[continent] = {
-          GDP_2012: 0, POPULATION_2012: 0,
-        };
-      });
-
-      // Iterate over all the country data and update the continent statistics.
-      countryDataList.forEach((country) => {
-        if (country[countryName] !== ' ' && countries.has(country[countryName])) {
-          const continentName = countries.get(country[countryName]);
-          continentData[continentName].GDP_2012 += parseFloat(country[countryGDP]);
-          continentData[continentName].POPULATION_2012 += parseFloat(country[countryPopulation]);
-        }
-      });
-
-      // Write the continent data into the output file.
-      writeFile(outputFile, JSON.stringify(continentData)).then(() => {
-        resolve();
-      }).catch((error) => {
-        reject(error);
-      });
-    }).catch((error) => {
-      console.log(error);
+const aggregate = filePath => new Promise((resolve, reject) => {
+  // Call the readFile method to get the
+  Promise.all([readFile(filePath), readFile(countryContinentFile)]).then((result) => {
+    const countryDataList = processCsv(result[0]);
+    const countries = getCountryContinentMap(result[1]);
+    // Process the csv text to get the list of country data objects.
+    const continentData = {};
+    // Create continent data objects and push them into a list.
+    new Set(countries.values()).forEach((continent) => {
+      continentData[continent] = {
+        GDP_2012: 0, POPULATION_2012: 0,
+      };
     });
-  });
-};
 
-aggregate('D:\\Workspace\\aggregate-gdp-population-js-problem-sankalpjohri\\data\\datafile.csv');
+    // Iterate over all the country data and update the continent statistics.
+    countryDataList.forEach((country) => {
+      if (country[countryName] !== ' ' && countries.has(country[countryName])) {
+        const continentName = countries.get(country[countryName]);
+        continentData[continentName].GDP_2012 += parseFloat(country[countryGDP]);
+        continentData[continentName].POPULATION_2012 += parseFloat(country[countryPopulation]);
+      }
+    });
+
+    // Write the continent data into the output file.
+    writeFile(outputFile, JSON.stringify(continentData)).then(() => {
+      resolve();
+    }).catch((error) => {
+      reject(error);
+    });
+  }).catch((error) => {
+    reject(error);
+  });
+});
 
 module.exports = aggregate;
