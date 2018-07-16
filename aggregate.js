@@ -44,6 +44,49 @@ function writeFile(filePath, data) {
 }
 
 /**
+ * Takes the csv data and processes it into aggregated continent data.
+ * @param {Array} headerRow
+ * @param {Array} dataRows
+ * @param {Objbect} countryContinentMapper
+ */
+function processCsvData(headerRow, dataRows, countryContinentMapper) {
+  const continentAggregateData = {};
+  // Get the indices of all the required values.
+  const indexCountryName = headerRow.indexOf(countryName);
+  const indexGDP2012 = headerRow.indexOf(countryGDP);
+  const indexPopulation2012 = headerRow.indexOf(countryPopulation);
+
+  // Process each data row and aggregate the data.
+  dataRows.forEach((data) => {
+    // Split the row data on comma.
+    const rowCell = data.split(',');
+    // Data validation checks.
+    if (rowCell[indexCountryName] !== ' ' && countryContinentMapper[rowCell[indexCountryName]] !== undefined && countryContinentMapper[rowCell[indexCountryName]] !== ' ') {
+      const continentName = countryContinentMapper[rowCell[indexCountryName]];
+      if (continentAggregateData[continentName] === undefined) {
+        // If the continent object doesn't exist then create an object and assign values.
+        continentAggregateData[continentName] = {};
+        continentAggregateData[continentName].GDP_2012 = parseFloat(
+          rowCell[indexGDP2012],
+        );
+        continentAggregateData[continentName].POPULATION_2012 = parseFloat(
+          rowCell[indexPopulation2012],
+        );
+      } else {
+        //  If the continent object exists then just update the values.
+        continentAggregateData[continentName].GDP_2012 += parseFloat(
+          rowCell[indexGDP2012],
+        );
+        continentAggregateData[continentName].POPULATION_2012 += parseFloat(
+          rowCell[indexPopulation2012],
+        );
+      }
+    }
+  });
+  return continentAggregateData;
+}
+
+/**
  * Aggregates GDP and Population Data by Continents
  * @param {String} filePath
  */
@@ -55,38 +98,7 @@ const aggregate = filePath => new Promise((resolve, reject) => {
     const headerRow = dataRows.shift().split(',');
     // Process the csv text to get the list of country data objects.
     const countryContinentMapper = JSON.parse(result[1]);
-    const continentAggregateData = {};
-
-    // Get the indices of all the required values.
-    const indexCountryName = headerRow.indexOf(countryName);
-    const indexGDP2012 = headerRow.indexOf(countryGDP);
-    const indexPopulation2012 = headerRow.indexOf(countryPopulation);
-
-    // Process each data row and aggregate the data.
-    dataRows.forEach((data) => {
-      const rowCell = data.split(',');
-      if (rowCell[indexCountryName] !== ' ' && countryContinentMapper[rowCell[indexCountryName]] !== undefined && countryContinentMapper[rowCell[indexCountryName]] !== ' ') {
-        const continentName = countryContinentMapper[rowCell[indexCountryName]];
-        if (continentAggregateData[continentName] === undefined) {
-          // If the continent object doesn't exist then create an object and assign values.
-          continentAggregateData[continentName] = {};
-          continentAggregateData[continentName].GDP_2012 = parseFloat(
-            rowCell[indexGDP2012],
-          );
-          continentAggregateData[continentName].POPULATION_2012 = parseFloat(
-            rowCell[indexPopulation2012],
-          );
-        } else {
-          //  If the continent object exists then just update the values.
-          continentAggregateData[continentName].GDP_2012 += parseFloat(
-            rowCell[indexGDP2012],
-          );
-          continentAggregateData[continentName].POPULATION_2012 += parseFloat(
-            rowCell[indexPopulation2012],
-          );
-        }
-      }
-    });
+    const continentAggregateData = processCsvData(headerRow, dataRows, countryContinentMapper);
 
     // Write the continent data into the output file.
     writeFile(outputFile, JSON.stringify(continentAggregateData)).then(() => {
