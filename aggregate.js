@@ -99,6 +99,4 @@ const aggregate = filePath => new Promise((resolve, reject) => {
   });
 });
 
-aggregate('D:\\Workspace\\aggregate-gdp-population-js-problem-sankalpjohri\\data\\datafile.csv');
-
 module.exports = aggregate;
